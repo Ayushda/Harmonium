@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html data-theme="dark">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta property="og:title" content="Web Harmonium" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Web Harmonium</title>
+<style>
+/* ═══════════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════════ */
+:root { --tr: 0.3s cubic-bezier(.4,0,.2,1); --radius: 20px; }
+
+[data-theme="dark"] {
+  --bg:       #07070f;
+  --surface:  #10101c;
+  --s2:       #181828;
+  --s3:       #22223a;
+  --s4:       #2c2c48;
+  --border:   rgba(255,255,255,0.055);
+  --border2:  rgba(255,255,255,0.11);
+  --text:     #eeeeff;
+  --text2:    #8888aa;
+  --text3:    #454560;
+  --accent:   #b57bff;
+  --accentD:  #7c3aed;
+  --accentDD: #5b21b6;
+  --glow:     rgba(181,123,255,0.2);
+  --glow2:    rgba(181,123,255,0.08);
+  --wkey:     #ddd8ee;
+  --wkey-h:   #cbb5ff;
+  --wkey-a:   #b57bff;
+  --bkey:     #0b0b16;
+  --bkey-h:   #261650;
+  --bkey-a:   #7c3aed;
+  --note-c:   #b57bff;
+  --key-border: rgba(255,255,255,0.08);
+  --kb-bg:    #0d0d1a;
+}
+[data-theme="light"] {
+  --bg:       #f4f2ff;
+  --surface:  #ffffff;
+  --s2:       #f0ecff;
+  --s3:       #e8e2ff;
+  --s4:       #ddd5ff;
+  --border:   rgba(0,0,0,0.06);
+  --border2:  rgba(0,0,0,0.13);
+  --text:     #1c1030;
+  --text2:    #6050a0;
+  --text3:    #a090cc;
+  --accent:   #7c3aed;
+  --accentD:  #6d28d9;
+  --accentDD: #5b21b6;
+  --glow:     rgba(124,58,237,0.18);
+  --glow2:    rgba(124,58,237,0.07);
+  --wkey:     #ffffff;
+  --wkey-h:   #ede0ff;
+  --wkey-a:   #7c3aed;
+  --bkey:     #1a0e2e;
+  --bkey-h:   #3d2070;
+  --bkey-a:   #5b21b6;
+  --note-c:   #7c3aed;
+  --key-border: rgba(0,0,0,0.1);
+  --kb-bg:    #f8f6ff;
+}
+
+/* ═══════════════════════════════════════════
+   BASE
+═══════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; }
+body {
+  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background var(--tr), color var(--tr);
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATED BACKGROUND
+═══════════════════════════════════════════ */
+.mesh {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none; overflow: hidden;
+}
+.blob {
+  position: absolute; border-radius: 50%;
+  filter: blur(100px); opacity: 0.28;
+  animation: drift 16s ease-in-out infinite alternate;
+}
+[data-theme="light"] .blob { opacity: 0.12; }
+.blob:nth-child(1) { width: 700px; height: 700px; background: radial-gradient(circle, #7c3aed, transparent 70%); top: -200px; left: -200px; }
+.blob:nth-child(2) { width: 600px; height: 600px; background: radial-gradient(circle, #c084fc, transparent 70%); bottom: -150px; right: -150px; animation-delay: -6s; }
+.blob:nth-child(3) { width: 400px; height: 400px; background: radial-gradient(circle, #0ea5e9, transparent 70%); top: 30%; right: 20%; opacity: 0.1; animation-delay: -11s; }
+@keyframes drift {
+  0%   { transform: translate(0,0) scale(1); }
+  100% { transform: translate(40px,25px) scale(1.08); }
+}
+
+/* ═══════════════════════════════════════════
+   APP SHELL
+═══════════════════════════════════════════ */
+.app {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 32px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(7,7,15,0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: sticky; top: 0; z-index: 100;
+}
+[data-theme="light"] .topbar {
+  background: rgba(244,242,255,0.75);
+}
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.logo-mark {
+  width: 44px; height: 44px; border-radius: 13px;
+  background: linear-gradient(135deg, var(--accent), var(--accentDD));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 4px 20px var(--glow), 0 0 0 1px var(--border2);
+}
+.brand h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px; font-weight: 700; letter-spacing: -0.3px;
+  line-height: 1.1;
+}
+.brand p {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--text2); margin-top: 1px;
+}
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+
+/* ── ICON BUTTON ── */
+.icon-btn {
+  width: 40px; height: 40px; border-radius: 11px;
+  border: 1px solid var(--border2); background: var(--s2);
+  color: var(--text2); cursor: pointer; font-size: 17px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--tr);
+}
+.icon-btn:hover {
+  background: var(--s3); border-color: var(--accent);
+  color: var(--accent); box-shadow: 0 0 0 3px var(--glow);
+}
+
+/* ═══════════════════════════════════════════
+   LOAD SCREEN
+═══════════════════════════════════════════ */
+#loadSection {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 40px 24px;
+  animation: fadeUp .5s ease;
+}
+.load-card {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 28px;
+  padding: 56px 44px;
+  text-align: center;
+  max-width: 420px; width: 100%;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,.05);
+  position: relative; overflow: hidden;
+}
+[data-theme="light"] .load-card {
+  box-shadow: 0 32px 80px rgba(124,58,237,.1), inset 0 1px 0 rgba(255,255,255,.9);
+}
+.load-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(181,123,255,.08), transparent 60%);
+  pointer-events: none;
+}
+.load-emoji { font-size: 60px; display: block; margin-bottom: 22px; animation: float 3s ease-in-out infinite; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+.load-card h2 { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; margin-bottom: 10px; }
+.load-card p { font-size: 14px; color: var(--text2); line-height: 1.7; margin-bottom: 32px; }
+#loadBtn {
+  background: linear-gradient(135deg, var(--accent), var(--accentDD));
+  color: #fff; border: none; border-radius: 14px;
+  padding: 16px 36px; font-size: 15px;
+  font-family: 'Outfit', sans-serif; font-weight: 600;
+  cursor: pointer; width: 100%; letter-spacing: .3px;
+  transition: all .2s;
+  box-shadow: 0 8px 30px var(--glow), inset 0 1px 0 rgba(255,255,255,.15);
+}
+#loadBtn:hover { transform: translateY(-2px); box-shadow: 0 14px 40px var(--glow); }
+#loadBtn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+/* ═══════════════════════════════════════════
+   MAIN — DESKTOP LAYOUT
+═══════════════════════════════════════════ */
+#mainScreen {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  animation: fadeUp .4s ease;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── STAGE (keyboard + notation, full width) ── */
+.stage {
+  padding: 28px 32px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── NOTATION ── */
+.notation-wrap {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; gap: 16px;
+}
+.notation-box {
+  flex: 1;
+  background: var(--s2); border: 1px solid var(--border2);
+  border-radius: 14px; padding: 12px 18px;
+}
+.notation-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px; font-weight: 500;
+  color: var(--accent); letter-spacing: 7px;
+  min-height: 30px; word-break: break-all;
+  text-shadow: 0 0 20px var(--glow);
+}
+.notation-hint {
+  font-size: 10px; color: var(--text3); margin-top: 5px; letter-spacing: .3px;
+}
+.notation-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--text2);
+  background: var(--s2); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 6px 14px; white-space: nowrap;
+}
+
+/* ── KEYBOARD CONTAINER ── */
+.kb-wrap {
+  background: var(--kb-bg);
+  border: 1px solid var(--border2);
+  border-radius: 18px;
+  padding: 24px 28px;
+  overflow-x: auto;
+  box-shadow: inset 0 2px 12px rgba(0,0,0,.25), 0 0 0 1px var(--border);
+}
+[data-theme="light"] .kb-wrap {
+  box-shadow: inset 0 2px 12px rgba(0,0,0,.06), 0 0 0 1px var(--border);
+}
+.kb-svg-wrap {
+  display: flex; justify-content: center;
+}
+/* Make keyboard bigger on desktop */
+.kb-svg-wrap svg {
+  width: 100%; max-width: 880px; height: auto;
+}
+
+/* SVG key classes */
+.white { fill: var(--wkey); stroke: var(--key-border); stroke-width: 1; cursor: pointer; transition: fill .08s; }
+.black { fill: var(--bkey); stroke: rgba(0,0,0,.5); stroke-width: 1; cursor: pointer; transition: fill .08s; }
+.white1:hover { fill: var(--wkey-h); }
+.black1:hover { fill: var(--bkey-h); }
+.white-active { fill: var(--wkey-a) !important; }
+.black-active  { fill: var(--bkey-a) !important; }
+
+/* ── CONTROLS ROW (below keyboard) ── */
+.controls-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  gap: 14px;
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* card */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  transition: border-color var(--tr), box-shadow var(--tr);
+}
+.card:hover {
+  border-color: var(--border2);
+  box-shadow: 0 4px 24px var(--glow2);
+}
+.clabel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 14px; display: block;
+}
+
+/* volume */
+.vol-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px; font-weight: 500; color: var(--accent);
+  margin-bottom: 12px; display: block;
+  text-shadow: 0 0 18px var(--glow);
+}
+input[type=range] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 3px; border-radius: 2px; outline: none; cursor: pointer;
+  background: linear-gradient(to right,
+    var(--accent) 0%, var(--accent) var(--fill, 30%),
+    var(--s4) var(--fill, 30%), var(--s4) 100%);
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  background: var(--surface); border: 2px solid var(--accent);
+  border-radius: 50%; cursor: pointer;
+  box-shadow: 0 0 0 4px var(--glow), 0 2px 6px rgba(0,0,0,.4);
+  transition: transform .15s, box-shadow .15s;
+}
+input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.2); box-shadow: 0 0 0 7px var(--glow);
+}
+input[type=range]::-moz-range-thumb {
+  width: 16px; height: 16px; background: var(--surface);
+  border: 2px solid var(--accent); border-radius: 50%; cursor: pointer;
+}
+
+/* stepper */
+.stepper {
+  display: flex; align-items: center;
+  background: var(--s2); border: 1px solid var(--border2);
+  border-radius: 12px; overflow: hidden;
+}
+.step-btn {
+  width: 38px; height: 42px; border: none; background: transparent;
+  color: var(--text2); font-size: 22px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s; font-weight: 300; flex-shrink: 0;
+}
+.step-btn:hover { background: var(--accent); color: #fff; }
+.step-num {
+  flex: 1; text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 22px; font-weight: 500; color: var(--accent);
+  text-shadow: 0 0 14px var(--glow);
+}
+.step-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text3); text-align: center; margin-top: 8px;
+}
+
+/* reverb */
+.rev-wrap { margin-top: 4px; display: flex; flex-direction: column; gap: 12px; }
+.rev-label { font-size: 13px; color: var(--text2); }
+.sw { position: relative; display: inline-block; width: 52px; height: 28px; }
+.sw input { opacity: 0; width: 0; height: 0; }
+.tog {
+  position: absolute; inset: 0; cursor: pointer;
+  background: var(--s3); border: 1px solid var(--border2);
+  border-radius: 28px; transition: all .3s;
+}
+.tog::before {
+  content: ''; position: absolute;
+  width: 20px; height: 20px; left: 3px; bottom: 3px;
+  background: var(--text3); border-radius: 50%; transition: all .3s;
+}
+input:checked + .tog { background: linear-gradient(135deg, var(--accent), var(--accentDD)); border-color: transparent; }
+input:checked + .tog::before { transform: translateX(24px); background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+
+/* root chip */
+.root-chip {
+  display: inline-block;
+  background: var(--s3); border: 1px solid var(--border2);
+  color: var(--accent); font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 500;
+  padding: 2px 8px; border-radius: 5px; margin-left: 6px;
+}
+
+/* midi card */
+.midi-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.midi-id { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text3); }
+.refresh-btn {
+  width: 28px; height: 28px; border-radius: 8px;
+  border: 1px solid var(--border2); background: var(--s2);
+  color: var(--text3); cursor: pointer; font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.refresh-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+.midi-sel {
+  width: 100%; background: var(--s2); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 9px 12px; color: var(--text);
+  font-size: 12px; font-family: 'Outfit', sans-serif; outline: none;
+  transition: border-color .2s;
+}
+.midi-sel:focus { border-color: var(--accent); }
+
+/* ── FOOTER ── */
+.footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 32px;
+  border-top: 1px solid var(--border);
+}
+.footer-left p { font-size: 12px; color: var(--text3); line-height: 1.8; }
+.footer-left a { color: var(--accent); text-decoration: none; }
+.footer-left a:hover { text-decoration: underline; }
+.footer-right {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--text2);
+  display: flex; align-items: center; gap: 12px;
+}
+.footer-right a { color: var(--accent); text-decoration: none; }
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE — MOBILE
+═══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .topbar { padding: 14px 16px; }
+  .stage { padding: 16px 16px 16px; }
+  .controls-row {
+    grid-template-columns: 1fr 1fr;
+    padding: 16px;
+  }
+  /* volume takes full width on mobile */
+  .controls-row .card:first-child { grid-column: 1 / -1; }
+  /* midi takes full width on mobile */
+  .card.midi-card { grid-column: 1 / -1; }
+  .footer { flex-direction: column; gap: 8px; text-align: center; padding: 16px; }
+}
+@media (max-width: 480px) {
+  .controls-row { grid-template-columns: 1fr; }
+  .controls-row .card:first-child { grid-column: auto; }
+  .card.midi-card { grid-column: auto; }
+  .notation-wrap { flex-direction: column; align-items: stretch; }
+  .notation-badge { display: none; }
+}
+</style>
+
+<script>
+/* ═══════════════════════════════════════════
+   ALL ORIGINAL LOGIC — FULLY INTACT
+═══════════════════════════════════════════ */
+var sampleURL = 'https://rajaramaniyer.github.io/harmonium-kannan-orig.wav';
+var reverbURL = 'https://rajaramaniyer.github.io/reverb.wav';
+var AudioContext = window.AudioContext || window.webkitAudioContext, context = null;
+var audioBuffer = null, gainNode = null, reverbNode = null, useReverb = false;
+var sourceNodes = [], sourceNodeState = [];
+
+var keyboardMap = {
+  "s":53,"S":53,"a":54,"A":54,"`":55,"1":56,
+  "q":57,"Q":57,"2":58,"w":59,"W":59,"e":60,"E":60,"4":61,
+  "r":62,"R":62,"5":63,"t":64,"T":64,"y":65,"Y":65,"7":66,
+  "u":67,"U":67,"8":68,"i":69,"I":69,"9":70,"o":71,"O":71,
+  "p":72,"P":72,"-":73,"[":74,"=":75,"]":76,"\\":77,"'":78,";":79
+};
+var swaramMap = {
+  "s":"Ṃ","S":"Ṃ","a":"Ṃ","A":"Ṃ","`":"P̣","1":"Ḍ",
+  "q":"Ḍ","Q":"Ḍ","2":"Ṇ","w":"Ṇ","W":"Ṇ","e":"S","E":"S","4":"R",
+  "r":"R","R":"R","5":"G","t":"G","T":"G","y":"M","Y":"M","7":"M",
+  "u":"P","U":"P","8":"D","i":"D","I":"D","9":"N","o":"N","O":"N",
+  "p":"Ṡ","P":"Ṡ","-":"Ṙ","[":"Ṙ","=":"Ġ","]":"Ġ","\\":"Ṁ","'":"Ṁ",";":"Ṗ"
+};
+var notation = "";
+function getCharLength(s){return[...s].length;}
+var loopStart=.5,loop=true,keyMap=[],baseKeyMap=[];
+var middleC=60,rootKey=62,currentOctave=3,stackCount=0;
+var octaveMap=[-36,-24,-12,0,12,24,36];
+var baseKeyNames=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+var keyElements={};
+
+function init(){
+  var t=parseInt(document.getElementById('transpose').innerText);
+  var s=(middleC-124)+(rootKey-middleC);
+  for(var i=0;i<128;++i){baseKeyMap[i]=s++;keyMap[i]=baseKeyMap[i]+t;}
+  for(var i=0;i<keyMap.length;++i){sourceNodes[i]=null;setSourceNode(i);}
+  document.getElementById('mainScreen').style.display='flex';
+  document.getElementById('loadSection').style.display='none';
+}
+function setSourceNode(i){
+  if(sourceNodes[i]!=null&&sourceNodeState[i]==1)sourceNodes[i].stop(0);
+  sourceNodeState[i]=0;
+  sourceNodes[i]=context.createBufferSource();
+  sourceNodes[i].connect(gainNode);
+  sourceNodes[i].buffer=audioBuffer;
+  sourceNodes[i].loop=loop;
+  sourceNodes[i].loopStart=loopStart;
+  if(keyMap[i]!=0)sourceNodes[i].detune.value=keyMap[i]*100;
+}
+function noteOff(note){
+  var i=note+octaveMap[currentOctave];
+  if(i>=0&&i<sourceNodes.length)setSourceNode(i);
+  for(var c=1;c<=stackCount;++c){i=note+octaveMap[currentOctave+c];if(i>=0&&i<sourceNodes.length)setSourceNode(i);}
+}
+function noteOn(note){
+  var i=note+octaveMap[currentOctave];
+  if(i>=0&&i<sourceNodes.length&&sourceNodeState[i]==0){sourceNodes[i].start(0);sourceNodeState[i]=1;}
+  for(var c=1;c<=stackCount;++c){i=note+octaveMap[currentOctave+c];if(i>=0&&i<sourceNodes.length&&sourceNodeState[i]==0){sourceNodes[i].start(0);sourceNodeState[i]=1;}}
+}
+function highlightKey(key,on){
+  var el=keyElements[key];if(!el)return;
+  var isB=el.classList.contains('black');
+  if(on){el.classList.add(isB?'black-active':'white-active');}
+  else{el.classList.remove('white-active');el.classList.remove('black-active');}
+}
+window.onkeydown=function(e){if(!e.repeat){var k=e.key;if(typeof keyboardMap[k]!=="undefined"){noteOn(keyboardMap[k]);highlightKey(k,true);}}};
+window.onkeyup=function(e){
+  var key=e.key;
+  if(typeof keyboardMap[key]!=="undefined"){noteOff(keyboardMap[key]);highlightKey(key,false);}
+  if(key==="Backspace"&&getCharLength(notation)>0){notation=notation.substring(0,getCharLength(notation)-1);}
+  else if(key==="Delete"){notation="";}
+  else if(key==="Enter"){console.log(notation);notation="";}
+  else if(key==="Tab"){e.preventDefault();notation+=",";}
+  else if(typeof swaramMap[key]!=="undefined"){notation+=swaramMap[key];}
+  var el=document.getElementById('notationDisplay');
+  if(el)el.textContent=notation||'\u00a0';
+};
+function initReverbNode(){
+  reverbNode=context.createConvolver();
+  var req=new XMLHttpRequest();req.open('GET',reverbURL,true);req.responseType='arraybuffer';
+  req.addEventListener('load',function(){context.decodeAudioData(req.response,function(b){reverbNode.buffer=b;reverbNode.connect(context.destination);updateReverbState(useReverb);},function(e){console.error(e);});});
+  req.send();
+}
+function load(){
+  context=new AudioContext();gainNode=context.createGain();gainNode.gain.value=.3;gainNode.connect(context.destination);
+  if(typeof Storage!=="undefined"){
+    if(localStorage.getItem("webharmonium.volume")!=null){document.getElementById("myRange").value=localStorage.getItem("webharmonium.volume");onGainChange();}
+    if(localStorage.getItem("webharmonium.useReverb")!=null){useReverb=localStorage.getItem("webharmonium.useReverb")=="true";document.getElementById("useReverb").checked=useReverb;}
+    if(localStorage.getItem("webharmonium.octave")!=null){try{currentOctave=parseInt(localStorage.getItem("webharmonium.octave"));}catch(ex){currentOctave=0;}}
+    document.getElementById('octave').innerText=currentOctave;
+    if(localStorage.getItem("webharmonium.transpose")!=null){document.getElementById('transpose').innerText=localStorage.getItem("webharmonium.transpose");var cs=parseInt(document.getElementById('transpose').innerText);document.getElementById('rootNote').innerText=baseKeyNames[(cs>=0)?cs%12:cs+12];}
+    if(localStorage.getItem("webharmonium.stack")!=null){try{stackCount=parseInt(localStorage.getItem("webharmonium.stack"));}catch(ex){stackCount=0;}}
+    document.getElementById('stack').innerText=stackCount;
+  }
+  initReverbNode();
+  document.getElementById('loadBtn').textContent='Loading…';
+  document.getElementById('loadBtn').disabled=true;
+  var req=new XMLHttpRequest();req.open('GET',sampleURL,true);req.responseType='arraybuffer';
+  req.addEventListener('load',function(){context.decodeAudioData(req.response,function(b){audioBuffer=b;init();},function(e){alert('Could not decode audio. Try a different browser.');console.error(e);});});
+  req.addEventListener('error',function(){alert('Could not load audio sample.');});
+  req.send();requestMIDIAccess();
+}
+function requestMIDIAccess(){
+  try{
+    var mi=document.getElementById('midiInputDevicesInfo');
+    if(navigator.requestMIDIAccess){if(mi.innerText.indexOf('Supported!')==-1)mi.innerText+=" Supported!";navigator.requestMIDIAccess().then(onMIDISuccess,onMIDIFailure);}
+    else{mi.innerText+=" Not Supported!";}
+  }catch(err){document.getElementById('midiInputDevicesInfo').innerText+=" Failed! "+err;}
+}
+var midiAccess=null;
+function onMIDISuccess(m){
+  midiAccess=m;var sel=document.getElementById("midiInputDevices");
+  while(sel.length>0)sel.remove(0);
+  for(var input of midiAccess.inputs.values()){var opt=document.createElement("option");opt.id=input.id;opt.text=input.name+" by "+input.manufacturer;sel.add(opt);input.onmidimessage=getMIDIMessage;}
+}
+function onMIDIFailure(e){document.getElementById('midiInputDevicesInfo').innerText+=" Failed! "+e;}
+function getMIDIMessage(msg){
+  var cmd=msg.data[0],note=msg.data[1],vel=(msg.data.length>2)?msg.data[2]:0;
+  var sel=document.getElementById("midiInputDevices");
+  if(sel.options.length>0&&msg.target.id==sel.options[sel.selectedIndex].id){
+    switch(cmd){
+      case 144: if(vel>0)noteOn(note);else noteOff(note);break;
+      case 128: noteOff(note);break;
+      case 176: if(note==7){document.getElementById("myRange").value=(100*vel)/127;onGainChange();}break;
+    }
+  }
+}
+function shiftOctave(v){
+  if(currentOctave+v>=0&&currentOctave+v<=6){currentOctave+=v;if(typeof Storage!=="undefined")localStorage.setItem("webharmonium.octave",currentOctave);}
+  document.getElementById('octave').innerText=currentOctave;
+}
+function changeStack(v){
+  stackCount+=v;if(stackCount<0)stackCount=0;else if(currentOctave+stackCount>6)stackCount=6-currentOctave;
+  document.getElementById('stack').innerText=stackCount;
+  if(typeof Storage!=="undefined")localStorage.setItem("webharmonium.stack",stackCount);
+}
+function shiftSemitone(v){
+  var cs=parseInt(document.getElementById('transpose').innerText);
+  if(cs+v>=-11&&cs+v<=11){cs+=v;document.getElementById('transpose').innerText=cs;document.getElementById('rootNote').innerText=baseKeyNames[(cs>=0)?cs%12:cs+12];}
+  if(typeof Storage!=="undefined")localStorage.setItem("webharmonium.transpose",document.getElementById('transpose').innerText);
+  if(audioBuffer)init();
+}
+var notePlaying=0;
+function play(p){notePlaying=keyboardMap[p.getAttribute('key')];if(typeof notePlaying!=="undefined")noteOn(notePlaying);}
+function stop(p){if(typeof notePlaying!=="undefined")noteOff(notePlaying);}
+function onGainChange(){
+  var val=document.getElementById("myRange").value;
+  if(typeof Storage!=="undefined")localStorage.setItem("webharmonium.volume",val);
+  document.getElementById('volumeLevel').innerText=val+'%';
+  if(gainNode!=null)gainNode.gain.value=val/100;
+  document.getElementById("myRange").style.setProperty('--fill',val+'%');
+}
+function updateReverbState(sv){
+  useReverb=sv;
+  if(typeof Storage!=="undefined")localStorage.setItem("webharmonium.useReverb",useReverb?"true":"false");
+  if(useReverb){try{gainNode.connect(reverbNode);}catch(e){}}
+  else{try{gainNode.disconnect(reverbNode);}catch(e){}}
+}
+function toggleTheme(){
+  var html=document.documentElement;
+  var next=html.getAttribute('data-theme')==='dark'?'light':'dark';
+  html.setAttribute('data-theme',next);
+  document.getElementById('themeIcon').textContent=next==='dark'?'☀️':'🌙';
+  localStorage.setItem('webharmonium.theme',next);
+}
+window.addEventListener('DOMContentLoaded',function(){
+  var saved=localStorage.getItem('webharmonium.theme');
+  if(saved){document.documentElement.setAttribute('data-theme',saved);document.getElementById('themeIcon').textContent=saved==='dark'?'☀️':'🌙';}
+  document.querySelectorAll('#harmoniumSVG polygon').forEach(function(p){var k=p.getAttribute('key');if(k)keyElements[k]=p;});
+  document.getElementById("myRange").style.setProperty('--fill','30%');
+});
+</script>
+</head>
+<body>
+
+<div class="mesh">
+  <div class="blob"></div>
+  <div class="blob"></div>
+  <div class="blob"></div>
+</div>
+
+<div class="app">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="logo-mark">🎹</div>
+      <div class="brand">
+        <h1>Web Harmonium</h1>
+        <p>Carnatic · Keyboard </p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">
+        <span id="themeIcon">☀️</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- LOAD SCREEN -->
+  <div id="loadSection">
+    <div class="load-card">
+      <span class="load-emoji">🎵</span>
+      <h2>Ready to Play?</h2>
+      <p></p>
+      <button id="loadBtn" onclick="load()">Load Harmonium</button>
+    </div>
+  </div>
+
+  <!-- MAIN SCREEN -->
+  <div id="mainScreen">
+
+    <!-- STAGE: notation + keyboard -->
+    <section class="stage">
+      <div class="notation-wrap">
+        <div class="notation-box">
+          <div id="notationDisplay" class="notation-text">&nbsp;</div>
+          <div class="notation-hint">Backspace: delete last &nbsp;·&nbsp; Delete: clear &nbsp;·&nbsp; Tab: comma &nbsp;·&nbsp; Enter: log</div>
+        </div>
+        <div class="notation-badge">Swaram Notation</div>
+      </div>
+
+      <div class="kb-wrap">
+        <div class="kb-svg-wrap">
+          <!-- Original SVG viewBox preserved exactly; CSS scales it -->
+          <svg id="harmoniumSVG" viewBox="0 0 294 110" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="0,0 14,0 14,50 21,50 21,100 0,100 0,0" class="white white1" key="`" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="14,0 28,0 28,50 14,50 14,0" class="black black1" key="1" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="21,50 28,50 28,0 35,0 35,50 42,50 42,100 21,100 21,50" class="white white1" key="q" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="35,0 49,0 49,50 35,50 35,0" class="black black1" key="2" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="42,50 49,50 49,0 63,0 63,100 42,100 42,50" class="white white1" key="w" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="63,0 77,0 77,50 84,50 84,100 63,100 63,0" class="white white1" key="e" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="77,0 91,0 91,50 77,50 77,0" class="black black1" key="4" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="84,50 91,50 91,0 98,0 98,50 105,50 105,100 84,100 84,50" class="white white1" key="r" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="98,0 112,0 112,50 98,50 98,0" class="black black1" key="5" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="105,50 112,50 112,0 126,0 126,100 105,100 105,50" class="white white1" key="t" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="126,0 140,0 140,50 147,50 147,100 126,100 126,0" class="white white1" key="y" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="140,0 154,0 154,50 140,50 140,0" class="black black1" key="7" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="147,50 154,50 154,0 161,0 161,50 168,50 168,100 147,100 147,50" class="white white1" key="u" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="161,0 175,0 175,50 161,50 161,0" class="black black1" key="8" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="168,50 175,50 175,0 182,0 182,50 189,50 189,100 168,100 168,50" class="white white1" key="i" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="182,0 196,0 196,50 182,50 182,0" class="black black1" key="9" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="189,50 196,50 196,0 210,0 210,100 189,100 189,50" class="white white1" key="o" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="210,0 224,0 224,50 231,50 231,100 210,100 210,0" class="white white1" key="p" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="224,0 238,0 238,50 224,50 224,0" class="black black1" key="-" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="231,50 238,50 238,0 245,0 245,50 252,50 252,100 231,100 231,50" class="white white1" key="[" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="245,0 259,0 259,50 245,50 245,0" class="black black1" key="=" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="252,50 259,50 259,0 273,0 273,100 252,100 252,50" class="white white1" key="]" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+            <polygon points="273,0 294,0 294,100 273,100 273,0" class="white white1" key="\" onmousedown="play(this)" onmouseup="stop(this)" ontouchstart="play(this)" ontouchend="stop(this)"/>
+
+            <!-- White key labels -->
+            <text x="4"   y="58" fill="#888" font-family="JetBrains Mono,monospace" font-size="9">`</text>
+            <text x="25"  y="58" fill="#888" font-family="JetBrains Mono,monospace" font-size="9">q</text>
+            <text x="46"  y="58" fill="#888" font-family="JetBrains Mono,monospace" font-size="9">w</text>
+            <text x="67"  y="58" fill="#888" font-family="JetBrains Mono,monospace" font-size="9">e</text>
+            <text x="88"  y="58" fill="#888" font-family="JetBrains Mono,monospace" font-size="9">r</text>
+            <text x="109" y="58" fill="#888" font-family="JetBrains Mono,monospace" font-size="9">t</text>
+            <text x="130" y="58" fill="#888" font-family="JetBrains Mono,monospace" font-size="9">y</text>
+            <text x="151" y="58" fill="#888" font-family="JetBrains Mono,monospace" font-size="9">u</text>
+            <text x="172" y="58" fill="#888" font-family="JetBrains Mono,monospace" font-size="9">i</text>
+            <text x="193" y="58" fill="#888" font-family="JetBrains Mono,monospace" font-size="9">o</text>
+            <text x="214" y="58" fill="#888" font-family="JetBrains Mono,monospace" font-size="9">p</text>
+            <text x="235" y="58" fill="#888" font-family="JetBrains Mono,monospace" font-size="9">[</text>
+            <text x="256" y="58" fill="#888" font-family="JetBrains Mono,monospace" font-size="9">]</text>
+            <text x="277" y="58" fill="#888" font-family="JetBrains Mono,monospace" font-size="9">\</text>
+            <!-- Black key labels -->
+            <text x="16"  y="28" fill="#666" font-family="JetBrains Mono,monospace" font-size="8">1</text>
+            <text x="37"  y="28" fill="#666" font-family="JetBrains Mono,monospace" font-size="8">2</text>
+            <text x="79"  y="28" fill="#666" font-family="JetBrains Mono,monospace" font-size="8">4</text>
+            <text x="100" y="28" fill="#666" font-family="JetBrains Mono,monospace" font-size="8">5</text>
+            <text x="142" y="28" fill="#666" font-family="JetBrains Mono,monospace" font-size="8">7</text>
+            <text x="163" y="28" fill="#666" font-family="JetBrains Mono,monospace" font-size="8">8</text>
+            <text x="184" y="28" fill="#666" font-family="JetBrains Mono,monospace" font-size="8">9</text>
+            <text x="226" y="28" fill="#666" font-family="JetBrains Mono,monospace" font-size="8">-</text>
+            <text x="247" y="28" fill="#666" font-family="JetBrains Mono,monospace" font-size="8">=</text>
+            <!-- Note names -->
+            <text x="67"  y="95" fill="var(--note-c)" font-family="JetBrains Mono,monospace" font-weight="bold" font-size="10">C</text>
+            <text x="88"  y="95" fill="var(--note-c)" font-family="JetBrains Mono,monospace" font-weight="bold" font-size="10">D</text>
+            <text x="109" y="95" fill="var(--note-c)" font-family="JetBrains Mono,monospace" font-weight="bold" font-size="10">E</text>
+            <text x="130" y="95" fill="var(--note-c)" font-family="JetBrains Mono,monospace" font-weight="bold" font-size="10">F</text>
+            <text x="151" y="95" fill="var(--note-c)" font-family="JetBrains Mono,monospace" font-weight="bold" font-size="10">G</text>
+            <text x="172" y="95" fill="var(--note-c)" font-family="JetBrains Mono,monospace" font-weight="bold" font-size="10">A</text>
+            <text x="193" y="95" fill="var(--note-c)" font-family="JetBrains Mono,monospace" font-weight="bold" font-size="10">B</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTROLS ROW -->
+    <div class="controls-row">
+
+      <!-- Volume -->
+      <div class="card">
+        <span class="clabel">Volume</span>
+        <span class="vol-num" id="volumeLevel">30%</span>
+        <input type="range" min="1" max="100" value="30" id="myRange"
+          onchange="onGainChange()" oninput="onGainChange()">
+      </div>
+
+      <!-- Reverb -->
+      <div class="card">
+        <span class="clabel">Reverb</span>
+        <div class="rev-wrap">
+          <span class="rev-label">Room effect</span>
+          <label class="sw">
+            <input id="useReverb" type="checkbox" onclick="updateReverbState(this.checked)">
+            <span class="tog"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Transpose -->
+      <div class="card">
+        <span class="clabel">Transpose <span class="root-chip" id="rootNote">D</span></span>
+        <div class="stepper">
+          <button class="step-btn" onclick="shiftSemitone(-1)">−</button>
+          <span class="step-num" id="transpose">0</span>
+          <button class="step-btn" onclick="shiftSemitone(1)">+</button>
+        </div>
+      </div>
+
+      <!-- Octave -->
+      <div class="card">
+        <span class="clabel">Octave</span>
+        <div class="stepper">
+          <button class="step-btn" onclick="shiftOctave(-1)">−</button>
+          <span class="step-num" id="octave">4</span>
+          <button class="step-btn" onclick="shiftOctave(1)">+</button>
+        </div>
+      </div>
+
+      <!-- Extra Reeds -->
+      <div class="card">
+        <span class="clabel">Extra Reeds</span>
+        <div class="stepper">
+          <button class="step-btn" onclick="changeStack(-1)">−</button>
+          <span class="step-num" id="stack">0</span>
+          <button class="step-btn" onclick="changeStack(1)">+</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- MIDI (full width below) -->
+    <div style="padding: 0 32px 24px;">
+      <div class="card midi-card">
+        <div class="midi-top">
+          <span class="clabel midi-id" id="midiInputDevicesInfo" style="margin-bottom:0;">MIDI Keyboard</span>
+          <button class="refresh-btn" onclick="requestMIDIAccess()" title="Refresh MIDI">↻</button>
+        </div>
+        <select id="midiInputDevices" class="midi-sel"></select>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+     
+      <div class="footer-center">
+        <span>Developed by @ayushdahal</span>
+        <a href="" target="_blank">↗ GitHub</a>
+      </div>
+    </footer>
+
+  </div><!-- /mainScreen -->
+
+</div><!-- /app -->
+</body>
+</html>
